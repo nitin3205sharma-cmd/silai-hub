@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Silai Hub - Darzi & Grahak Portal</title>
+  
+  <!-- Tailwind CSS & FontAwesome Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex justify-center">
+
+  <div class="w-full max-w-md bg-white min-h-screen shadow-xl flex flex-col relative pb-10">
+
+    <!-- Recaptcha Container -->
+    <div id="recaptcha-container"></div>
+
+    <!-- ==================================================== -->
+    <!-- 1. MAIN LANDING: LOGIN & SIGN-UP TOGGLE MENU -->
+    <!-- ==================================================== -->
+    <section id="screen-auth" class="p-6 flex flex-col justify-center flex-1">
+      <div class="flex flex-col items-center mb-6">
+        <div class="w-20 h-20 bg-pink-100 text-pink-700 rounded-full flex items-center justify-center text-3xl mb-3 shadow-sm">
+          <i class="fa-solid fa-scissors"></i>
+        </div>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Silai Hub Portal</h1>
+        <p class="text-xs text-slate-500 text-center">Darzi aur Grahak ke liye smart digital platform</p>
+      </div>
+
+      <!-- Tab Switcher: Login vs Sign Up -->
+      <div class="flex bg-slate-100 p-1 rounded-xl mb-6 border">
+        <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-slate-900 shadow transition">
+          Purana User (Login)
+        </button>
+        <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition">
+          Naya User (Sign Up)
+        </button>
+      </div>
+
+      <!-- A. LOGIN FORM -->
+      <div id="form-login" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Registered Mobile Number</label>
+          <div class="flex items-center border rounded-xl px-3 py-2.5 bg-slate-50 focus-within:ring-2 focus-within:ring-pink-500">
+            <span class="text-slate-500 font-bold mr-2 text-sm">+91</span>
+            <input id="login-phone" type="tel" maxlength="10" placeholder="98XXXXXXXX" class="w-full bg-transparent outline-none font-semibold text-slate-800 text-sm" />
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Pehle se registered mobile number daalein.</p>
+        </div>
+
+        <button onclick="handleLoginSubmit()" id="btn-login" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-xl shadow-md transition text-sm">
+          Login Karein &rarr;
+        </button>
+
+        <div class="text-center pt-2">
+          <span class="text-xs text-slate-500">Naye hain? </span>
+          <button onclick="switchAuthTab('signup')" class="text-xs font-bold text-pink-600 hover:underline">Yahan se naya account banayein</button>
+        </div>
+      </div>
+
+      <!-- B. SIGN-UP FORM -->
+      <div id="form-signup" class="space-y-3 hidden text-sm">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Aapka Poora Naam</label>
+          <input id="signup-name" type="text" placeholder="e.g. Ramesh Kumar / Pooja Sharma" class="w-full border rounded-xl p-2.5 bg-slate-50 outline-none text-xs" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Mobile Number</label>
+          <div class="flex items-center border rounded-xl px-3 py-2 bg-slate-50 focus-within:ring-2 focus-within:ring-pink-500">
+            <span class="text-slate-500 font-bold mr-2 text-xs">+91</span>
+            <input id="signup-phone" type="tel" maxlength="10" placeholder="10-digit number" class="w-full bg-transparent outline-none font-semibold text-slate-800 text-xs" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Aapka Role Chunein</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="border p-2.5 rounded-xl flex items-center space-x-2 bg-slate-50 cursor-pointer text-xs font-semibold">
+              <input type="radio" name="signup_role" value="CUSTOMER" checked class="accent-pink-600" />
+              <span>Grahak (Customer)</span>
+            </label>
+            <label class="border p-2.5 rounded-xl flex items-center space-x-2 bg-slate-50 cursor-pointer text-xs font-semibold">
+              <input type="radio" name="signup_role" value="TAILOR" class="accent-teal-600" />
+              <span>Darzi (Tailor)</span>
+            </label>
+          </div>
+        </div>
+
+        <button onclick="handleSignupSubmit()" id="btn-signup" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl shadow-md transition text-sm mt-2">
+          Naya Account Banayein &rarr;
+        </button>
+
+        <div class="text-center pt-2">
+          <span class="text-xs text-slate-500">Pehle se account hai? </span>
+          <button onclick="switchAuthTab('login')" class="text-xs font-bold text-teal-700 hover:underline">Login karein</button>
+        </div>
+      </div>
+
+      <!-- C. OTP VERIFICATION BOX -->
+      <div id="box-otp-verify" class="space-y-4 hidden mt-4 border-t pt-4">
+        <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-center">
+          <p class="text-xs text-amber-800 font-semibold" id="otp-phone-msg">Mobile number par OTP bheja gaya hai</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">6-Digit OTP Darj Karein</label>
+          <input id="input-otp" type="number" placeholder="123456" class="w-full border rounded-xl px-4 py-2.5 bg-slate-50 text-center text-xl font-bold tracking-widest outline-none focus:ring-2 focus:ring-pink-600" />
+        </div>
+        <button onclick="verifySubmittedOTP()" id="btn-verify-otp" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 rounded-xl shadow-md transition text-sm">
+          Verify & Continue &rarr;
+        </button>
+        <button onclick="cancelOTP()" class="w-full text-xs text-slate-500 hover:underline">Cancel / Number Badlein</button>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- 2. TAILOR ONBOARDING (RATE SETUP) -->
+    <!-- ==================================================== -->
+    <section id="screen-tailor-onboard" class="p-5 flex flex-col flex-1 hidden">
+      <h2 class="text-lg font-bold mb-1 text-slate-900">Boutique & Rate List Setup</h2>
+      <p class="text-xs text-slate-500 mb-4">Apni dukan ki details aur 8 categories ki silai rate darj karein</p>
+
+      <div class="space-y-3 overflow-y-auto pr-1 flex-1 text-sm">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Boutique / Dukaan Ka Naam</label>
+          <input id="onboard-shop-name" type="text" placeholder="e.g. Radhika Ladies Boutique" class="w-full border rounded-lg p-2 bg-slate-50 outline-none text-xs" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Dukaan Ka Pata (Address)</label>
+          <input id="onboard-address" type="text" placeholder="e.g. Main Bazar, Shop No. 5" class="w-full border rounded-lg p-2 bg-slate-50 outline-none text-xs" />
+        </div>
+
+        <h3 class="text-xs font-extrabold uppercase text-teal-800 pt-2">Silai Rates Set Karein (₹)</h3>
+        <div id="tailor-rates-inputs" class="grid grid-cols-2 gap-2"></div>
+
+        <button onclick="saveTailorProfile()" class="w-full mt-4 bg-teal-800 hover:bg-teal-900 text-white font-bold py-3 rounded-xl shadow transition text-sm">
+          Save Profile & Open Dashboard
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- 3. TAILOR DASHBOARD -->
+    <!-- ==================================================== -->
+    <section id="screen-tailor-dashboard" class="flex flex-col flex-1 hidden">
+      <div class="bg-teal-800 text-white p-4 flex justify-between items-center shadow-md">
+        <div>
+          <h2 id="td-shop-name" class="font-bold text-base">Darzi Panel</h2>
+          <p id="td-shop-addr" class="text-xs text-teal-200">Shop Address</p>
+        </div>
+        <button onclick="logout()" class="text-xs bg-teal-900 px-3 py-1.5 rounded-lg border border-teal-700">Logout</button>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto">
+        <h3 class="font-bold text-slate-800 text-sm mb-2">Aaye Huye Orders:</h3>
+        <div id="tailor-orders-list" class="space-y-3 text-sm"></div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- 4. CUSTOMER DASHBOARD & LIVE ORDERS -->
+    <!-- ==================================================== -->
+    <section id="screen-customer-home" class="flex flex-col flex-1 hidden">
+      <div class="bg-pink-700 text-white p-4 flex justify-between items-center shadow-md">
+        <div>
+          <h2 class="font-bold text-base">Silai Hub Marketplace</h2>
+          <p id="cust-welcome-name" class="text-xs text-pink-200 font-semibold"></p>
+        </div>
+        <button onclick="logout()" class="text-xs bg-pink-800 px-3 py-1.5 rounded-lg border border-pink-600">Logout</button>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto space-y-4">
+        <!-- Client Saved Digital Naap Profile -->
+        <div id="customer-saved-measurements-card" class="bg-teal-50 border border-teal-200 rounded-xl p-3 text-xs hidden">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-bold text-teal-800 flex items-center gap-1.5"><i class="fa-solid fa-tape"></i> Aapka Saved Digital Naap:</span>
+            <span class="text-[10px] bg-teal-200 text-teal-900 px-2 py-0.5 rounded font-semibold">Future Ready</span>
+          </div>
+          <div id="customer-saved-measurements-text" class="text-slate-700 space-y-1"></div>
+        </div>
+
+        <!-- Live Active Order Section -->
+        <div>
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">Aapke Active Orders (Live Status):</h3>
+          <div id="customer-active-orders" class="space-y-2"></div>
+        </div>
+
+        <!-- 8 Categories Catalog -->
+        <div>
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">Stitching Catalog:</h3>
+          <div id="customer-catalog-grid" class="grid grid-cols-2 gap-2.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- 5. TAILOR SELECTOR SCREEN -->
+    <!-- ==================================================== -->
+    <section id="screen-tailor-selection" class="flex flex-col flex-1 hidden">
+      <div class="bg-pink-700 text-white p-4 flex items-center space-x-3 shadow-md">
+        <button onclick="showScreen('screen-customer-home')"><i class="fa-solid fa-arrow-left"></i></button>
+        <h2 id="select-category-title" class="font-bold text-base">Darzi Chunein</h2>
+      </div>
+      <div class="p-4 flex-1 overflow-y-auto">
+        <div id="tailor-candidates-list" class="space-y-3"></div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- 6. DESIGN PREFERENCES & MULTI-PHOTO UPLOAD FORM -->
+    <!-- ==================================================== -->
+    <section id="screen-customer-customize" class="flex flex-col flex-1 hidden">
+      <div class="bg-pink-700 text-white p-4 flex items-center space-x-3 shadow-md">
+        <button onclick="showScreen('screen-tailor-selection')"><i class="fa-solid fa-arrow-left"></i></button>
+        <h2 id="customize-header-title" class="font-bold text-base">Design & Naap</h2>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto space-y-4 text-sm">
+        <div class="bg-slate-50 border rounded-xl p-3 space-y-2.5">
+          <h4 class="font-bold text-slate-800 text-xs uppercase text-pink-700">1. Design Preferences</h4>
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Gale Ka Front Design</label>
+            <select id="cust-front-neck" class="w-full border rounded-lg p-2 bg-white outline-none">
+              <option>Round Neck</option><option>V-Neck</option><option>Sweetheart</option><option>Boat Neck</option><option>Collar Style</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Gale Ka Back Design</label>
+            <select id="cust-back-neck" class="w-full border rounded-lg p-2 bg-white outline-none">
+              <option>Deep U Neck</option><option>Square Back</option><option>Backless with Dori</option><option>Closed Pack</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Sleeve Length</label>
+            <select id="cust-sleeves" class="w-full border rounded-lg p-2 bg-white outline-none">
+              <option>Sleeveless</option><option>Short Sleeve (4")</option><option>Elbow Length (10")</option><option>Full Sleeve</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Pocket Style</label>
+            <select id="cust-pocket" class="w-full border rounded-lg p-2 bg-white outline-none">
+              <option>No Pocket</option><option>Right Side Pocket</option><option>Both Side Pocket</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-xs font-semibold">With Astar (Lining): <b class="text-pink-600">+₹80</b></span>
+            <input id="cust-astar" type="checkbox" checked onchange="calculateTotal()" class="w-4 h-4 accent-pink-600" />
+          </div>
+        </div>
+
+        <!-- MULTI-PHOTO UPLOAD FEATURE -->
+        <div class="bg-slate-50 border rounded-xl p-3">
+          <h4 class="font-bold text-slate-800 text-xs uppercase text-pink-700 mb-1">2. Pasand Ke Design Ki Photos (1 ya Zyada)</h4>
+          <p class="text-[11px] text-slate-500 mb-2">Pinterest, Instagram ya Gallery se designs add karein:</p>
+          <input type="file" id="cust-photos" multiple accept="image/*" onchange="handleMultiplePhotos(event)" class="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-pink-100 file:text-pink-700 cursor-pointer" />
+          <div id="photos-preview-container" class="flex flex-wrap gap-2 mt-2"></div>
+        </div>
+
+        <!-- 3 NAAP OPTIONS + EXPANDED MANUAL MEASUREMENT FIELDS -->
+        <div class="bg-slate-50 border rounded-xl p-3 space-y-2">
+          <h4 class="font-bold text-slate-800 text-xs uppercase text-pink-700 mb-1">3. Apna Naap Kaise Denge?</h4>
+          
+          <div id="saved-naap-option-box" class="hidden">
+            <label class="flex items-start space-x-2 text-xs cursor-pointer bg-teal-50 border border-teal-300 p-2 rounded-lg mb-1">
+              <input type="radio" name="naap_mode" value="SAVED_PROFILE" checked onchange="onNaapModeChange()" class="mt-0.5 accent-teal-700" />
+              <span><b class="text-teal-900">Mera Saved Naap Use Karein (Quick)</b><br/><span id="saved-naap-summary-text" class="text-teal-700 text-[11px]"></span></span>
+            </label>
+          </div>
+
+          <label class="flex items-start space-x-2 text-xs cursor-pointer">
+            <input type="radio" name="naap_mode" value="STORE_VISIT" onchange="onNaapModeChange()" class="mt-0.5 accent-pink-600" />
+            <span><b>Sample Kapda Rider Ko Denge / Store Denge</b><br/><span class="text-slate-500">Purana fitting kapda unstitched kapde ke sath bhejein (Free)</span></span>
+          </label>
+          <label class="flex items-start space-x-2 text-xs cursor-pointer">
+            <input type="radio" name="naap_mode" value="MANUAL" onchange="onNaapModeChange()" class="mt-0.5 accent-pink-600" />
+            <span><b>Apna Naap Naya Likhein</b><br/><span class="text-slate-500">Inches mein complete body naap khud darj karein</span></span>
+          </label>
+          <label class="flex items-start space-x-2 text-xs cursor-pointer">
+            <input type="radio" name="naap_mode" value="HOME_VISIT" onchange="onNaapModeChange()" class="mt-0.5 accent-pink-600" />
+            <span><b>Ghar Par Bula Kar Naap Denge (+₹50)</b><br/><span class="text-slate-500">Assistant ghar aakar safe digital naap record karega</span></span>
+          </label>
+
+          <!-- DETAILED COMPLETE MANUAL NAAP FORM -->
+          <div id="manual-naap-inputs" class="space-y-3 pt-2 hidden">
+            <!-- Upper Body (Salwar / Kurta / Blouse) -->
+            <div class="bg-white border rounded-lg p-2.5 space-y-2">
+              <p class="text-[11px] font-bold text-pink-700 border-b pb-1">👗 Salwar / Kurta / Blouse Ka Naap (Inches)</p>
+              <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+                <div>
+                  <label class="text-slate-500 block">Shoulder</label>
+                  <input id="naap-shoulder" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Back Neck</label>
+                  <input id="naap-back-neck" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Front Neck</label>
+                  <input id="naap-front-neck" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Upper Breast</label>
+                  <input id="naap-upper-breast" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Lower Breast</label>
+                  <input id="naap-lower-breast" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Arm Hole</label>
+                  <input id="naap-arm-hole" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Sleeve Length</label>
+                  <input id="naap-sleeve-length" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Sleeve Fitting</label>
+                  <input id="naap-sleeve-fitting" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Suit Length</label>
+                  <input id="naap-suit-length" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Body (Plazo / Paint / Salwar) -->
+            <div class="bg-white border rounded-lg p-2.5 space-y-2">
+              <p class="text-[11px] font-bold text-indigo-700 border-b pb-1">👖 Plazo / Paint / Salwar Ka Naap (Inches)</p>
+              <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+                <div>
+                  <label class="text-slate-500 block">Waist (Kamar)</label>
+                  <input id="naap-waist" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Hip</label>
+                  <input id="naap-hip" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Salwar Length</label>
+                  <input id="naap-salwar-length" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Mohri</label>
+                  <input id="naap-mohri" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Salwar/Paint Aasan</label>
+                  <input id="naap-aasan" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Belt</label>
+                  <input id="naap-belt" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+                <div>
+                  <label class="text-slate-500 block">Thigh Fitting</label>
+                  <input id="naap-thigh-fitting" type="number" placeholder='"' class="border rounded p-1.5 w-full text-xs" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Expected Delivery Kab Tak Chahiye?</label>
+          <input id="cust-delivery-date" type="text" value="3 Din ke andar" class="w-full border rounded-xl p-2.5 bg-slate-50 text-xs font-semibold outline-none" />
+        </div>
+
+        <button onclick="confirmOrder()" id="btn-confirm-order" class="w-full bg-pink-700 hover:bg-pink-800 text-white font-bold py-3.5 rounded-xl shadow-lg transition text-sm">
+          CONFIRM ORDER
+        </button>
+      </div>
+    </section>
+
+    <!-- IMAGE VIEWER MODAL -->
+    <div id="image-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden" onclick="closeImageModal()">
+      <div class="relative max-w-sm w-full bg-transparent flex flex-col items-center">
+        <img id="modal-img" src="" class="max-h-[80vh] w-auto rounded-xl shadow-2xl object-contain" />
+        <button class="mt-3 bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold">Close</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const CATEGORIES = [
+      'Blouse', 'Kurta Salwar', 'Kurta Plazzo', 'Kurta Pant',
+      'Shirt', 'Alteration', 'Lehenga', 'Kurta'
+    ];
+
+    let usersDB = JSON.parse(localStorage.getItem('silai_users')) || {
+      '9999999999': { name: 'Sunita Verma', role: 'TAILOR', phone: '9999999999' },
+      '8888888888': { 
+        name: 'Pooja Sharma', 
+        role: 'CUSTOMER', 
+        phone: '8888888888',
+        savedMeasurements: { 
+          shoulder: "14", backNeck: "8", frontNeck: "6.5", upperBreast: "36", lowerBreast: "34",
+          sleeveFitting: "11", armHole: "16", suitLength: "42", sleeveLength: "10",
+          waist: "32", hip: "38", salwarLength: "38", mohri: "6.5", aasan: "14", belt: "22", thighFitting: "21"
+        }
+      }
+    };
+
+    let tailorsDB = JSON.parse(localStorage.getItem('silai_tailors')) || [
+      {
+        id: 'T9999999999',
+        phone: '9999999999',
+        shopName: 'Radhika Designer Boutique',
+        address: 'Sector 4, Central Market',
+        rating: 4.9,
+        completedOrders: 32,
+        rates: {
+          'Blouse': 450, 'Kurta Salwar': 400, 'Kurta Plazzo': 420, 'Kurta Pant': 450,
+          'Shirt': 280, 'Alteration': 60, 'Lehenga': 1500, 'Kurta': 300
+        }
+      }
+    ];
+
+    let ordersDB = JSON.parse(localStorage.getItem('silai_orders')) || [];
+
+    function saveLocalStorage() {
+      localStorage.setItem('silai_users', JSON.stringify(usersDB));
+      localStorage.setItem('silai_tailors', JSON.stringify(tailorsDB));
+      localStorage.setItem('silai_orders', JSON.stringify(ordersDB));
+    }
+
+    let currentSessionUser = JSON.parse(localStorage.getItem('silai_active_session')) || null;
+    let pendingAuthData = null;
+    let isLoginMode = true;
+    let uploadedPhotoDataURLs = [];
+
+    window.onload = function() {
+      if (currentSessionUser) {
+        routeUserToInterface(currentSessionUser);
+      } else {
+        showScreen('screen-auth');
+      }
+    };
+
+    function showScreen(id) {
+      ['screen-auth', 'screen-tailor-onboard', 'screen-tailor-dashboard', 'screen-customer-home', 'screen-tailor-selection', 'screen-customer-customize'].forEach(s => {
+        document.getElementById(s).classList.add('hidden');
+      });
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    // Tab Switching
+    function switchAuthTab(type) {
+      isLoginMode = (type === 'login');
+      const tabLogin = document.getElementById('tab-login');
+      const tabSignup = document.getElementById('tab-signup');
+      const formLogin = document.getElementById('form-login');
+      const formSignup = document.getElementById('form-signup');
+      document.getElementById('box-otp-verify').classList.add('hidden');
+
+      if (isLoginMode) {
+        tabLogin.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-slate-900 shadow transition";
+        tabSignup.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition";
+        formLogin.classList.remove('hidden');
+        formSignup.classList.add('hidden');
+      } else {
+        tabSignup.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-slate-900 shadow transition";
+        tabLogin.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition";
+        formSignup.classList.remove('hidden');
+        formLogin.classList.add('hidden');
+      }
+    }
+
+    function handleLoginSubmit() {
+      const phone = document.getElementById('login-phone').value.trim();
+      if (phone.length < 10) {
+        alert('Kripya sahi 10-digit mobile number bharein!');
+        return;
+      }
+      const user = usersDB[phone];
+      if (!user) {
+        alert(`❌ Ye number registered nahi hai!\n\nKripya "Naya User (Sign Up)" par click karke pehle account banayein.`);
+        switchAuthTab('signup');
+        document.getElementById('signup-phone').value = phone;
+        return;
+      }
+      pendingAuthData = { type: 'LOGIN', user: user };
+      showOtpVerification(phone);
+    }
+
+    function handleSignupSubmit() {
+      const name = document.getElementById('signup-name').value.trim();
+      const phone = document.getElementById('signup-phone').value.trim();
+      const role = document.querySelector('input[name="signup_role"]:checked').value;
+
+      if (!name || phone.length < 10) {
+        alert('Kripya apna naam aur 10-digit number bharein!');
+        return;
+      }
+      if (usersDB[phone]) {
+        alert(`⚠️ Ye number pehle se registered hai!\n\nAap "Purana User (Login)" tab se login karein.`);
+        switchAuthTab('login');
+        document.getElementById('login-phone').value = phone;
+        return;
+      }
+
+      pendingAuthData = {
+        type: 'SIGNUP',
+        user: { name: name, phone: phone, role: role, savedMeasurements: null }
+      };
+      showOtpVerification(phone);
+    }
+
+    function showOtpVerification(phone) {
+      document.getElementById('form-login').classList.add('hidden');
+      document.getElementById('form-signup').classList.add('hidden');
+      document.getElementById('otp-phone-msg').innerHTML = `Number <b>+91 ${phone}</b> par OTP bheja gaya hai.<br><span class="text-[10px] text-slate-400">Testing code: <b>123456</b></span>`;
+      document.getElementById('box-otp-verify').classList.remove('hidden');
+    }
+
+    function cancelOTP() {
+      document.getElementById('box-otp-verify').classList.add('hidden');
+      if (isLoginMode) {
+        document.getElementById('form-login').classList.remove('hidden');
+      } else {
+        document.getElementById('form-signup').classList.remove('hidden');
+      }
+      pendingAuthData = null;
+    }
+
+    function verifySubmittedOTP() {
+      const otp = document.getElementById('input-otp').value.trim();
+      if (otp !== '123456') {
+        alert('Testing OTP 123456 darj karein!');
+        return;
+      }
+
+      if (pendingAuthData.type === 'SIGNUP') {
+        const newUser = pendingAuthData.user;
+        usersDB[newUser.phone] = newUser;
+        saveLocalStorage();
+        currentSessionUser = newUser;
+        localStorage.setItem('silai_active_session', JSON.stringify(newUser));
+        alert(`🎉 Badhaai ho, ${newUser.name}!\nAapka account ban gaya.`);
+      } else {
+        currentSessionUser = pendingAuthData.user;
+        localStorage.setItem('silai_active_session', JSON.stringify(currentSessionUser));
+      }
+
+      routeUserToInterface(currentSessionUser);
+    }
+
+    function routeUserToInterface(user) {
+      if (user.role === 'TAILOR') {
+        const tailorProfile = tailorsDB.find(t => t.phone === user.phone);
+        if (!tailorProfile) {
+          renderTailorOnboard();
+        } else {
+          renderTailorDashboard(tailorProfile);
+        }
+      } else {
+        renderCustomerDashboard(user);
+      }
+    }
+
+    function logout() {
+      currentSessionUser = null;
+      localStorage.removeItem('silai_active_session');
+      document.getElementById('login-phone').value = '';
+      document.getElementById('signup-phone').value = '';
+      document.getElementById('input-otp').value = '';
+      cancelOTP();
+      switchAuthTab('login');
+      showScreen('screen-auth');
+    }
+
+    // --- TAILOR SECTION ---
+    function renderTailorOnboard() {
+      const container = document.getElementById('tailor-rates-inputs');
+      container.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        let defPrice = cat === 'Lehenga' ? 1500 : (cat === 'Alteration' ? 60 : 400);
+        container.innerHTML += `
+          <div>
+            <label class="block text-[11px] text-slate-500 font-semibold truncate">${cat} (₹)</label>
+            <input id="rate-${cat.replace(/\s+/g, '')}" type="number" value="${defPrice}" class="w-full border rounded p-1.5 bg-slate-50 text-xs font-bold" />
+          </div>
+        `;
+      });
+      showScreen('screen-tailor-onboard');
+    }
+
+    function saveTailorProfile() {
+      const shopName = document.getElementById('onboard-shop-name').value.trim();
+      const address = document.getElementById('onboard-address').value.trim();
+
+      if (!shopName || !address) {
+        alert('Dukaan ka naam aur pata bharna zaroori hai!');
+        return;
+      }
+
+      let ratesObj = {};
+      CATEGORIES.forEach(cat => {
+        ratesObj[cat] = parseInt(document.getElementById(`rate-${cat.replace(/\s+/g, '')}`).value) || 300;
+      });
+
+      const newTailor = {
+        id: 'T' + currentSessionUser.phone,
+        phone: currentSessionUser.phone,
+        shopName: shopName,
+        address: address,
+        rating: 4.9,
+        completedOrders: 0,
+        rates: ratesObj
+      };
+
+      tailorsDB.push(newTailor);
+      saveLocalStorage();
+      renderTailorDashboard(newTailor);
+    }
+
+    function renderTailorDashboard(tailor) {
+      document.getElementById('td-shop-name').innerText = tailor.shopName;
+      document.getElementById('td-shop-addr').innerText = '📍 ' + tailor.address + ' | ⭐ ' + tailor.rating;
+
+      const listContainer = document.getElementById('tailor-orders-list');
+      const myOrders = ordersDB.filter(o => o.tailorId === tailor.id);
+
+      if (myOrders.length === 0) {
+        listContainer.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl">Abhi koi naya order nahi aaya hai.</div>`;
+      } else {
+        listContainer.innerHTML = '';
+        myOrders.forEach(ord => {
+          const isPending = ord.status === 'PENDING';
+          const hasPhotos = ord.photos && ord.photos.length > 0;
+          const m = ord.measurements;
+          const hasMeasurements = m && Object.keys(m).length > 0;
+
+          listContainer.innerHTML += `
+            <div class="border rounded-xl p-3 bg-white shadow-sm space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-slate-900">${ord.category} • ₹${ord.price}</span>
+                <span class="text-xs px-2 py-0.5 rounded font-bold ${getStatusClass(ord.status)}">${ord.status}</span>
+              </div>
+              <p class="text-xs text-slate-500">Grahak: +91 ${ord.customerPhone} | Due: ${ord.deliveryDueDate}</p>
+              
+              <div class="text-xs bg-slate-50 p-2 rounded border space-y-1.5">
+                <p><b>Gala (Front/Back):</b> ${ord.specs.frontNeck} / ${ord.specs.backNeck}</p>
+                <p><b>Sleeves & Pocket:</b> ${ord.specs.sleeveLength} | ${ord.specs.pocketStyle}</p>
+                <p class="text-teal-700"><b>Astar:</b> ${ord.specs.astar}</p>
+                <p><b>Naap Mode:</b> ${ord.measurementMode}</p>
+
+                ${hasPhotos ? `
+                  <div class="pt-1">
+                    <p class="font-bold text-slate-700 mb-1">📸 Customer Bheji Hui Photos (${ord.photos.length}):</p>
+                    <div class="flex flex-wrap gap-1.5">
+                      ${ord.photos.map(p => `
+                        <img src="${p}" onclick="openImageModal('${p}')" class="w-14 h-14 rounded-lg object-cover border cursor-pointer hover:opacity-80 transition" />
+                      `).join('')}
+                    </div>
+                  </div>
+                ` : '<p class="text-slate-400">Koi photo attach nahi hai.</p>'}
+
+                <!-- DETAILED NAAP VIEW IN TAILOR PANEL -->
+                ${hasMeasurements ? `
+                  <div class="pt-1.5 border-t mt-1 space-y-1">
+                    <p class="font-bold text-slate-800">📏 Is Order Ka Naap:</p>
+                    
+                    ${(m.shoulder || m.upperBreast || m.suitLength) ? `
+                      <div class="bg-pink-50/50 p-1.5 rounded border border-pink-200">
+                        <p class="text-[10px] font-bold text-pink-700">👗 Kurta / Blouse / Salwar Naap:</p>
+                        <p class="text-[11px] text-slate-700">
+                          ${m.shoulder ? `Shoulder: <b>${m.shoulder}"</b> | ` : ''}
+                          ${m.frontNeck ? `Front Neck: <b>${m.frontNeck}"</b> | ` : ''}
+                          ${m.backNeck ? `Back Neck: <b>${m.backNeck}"</b> | ` : ''}
+                          ${m.upperBreast ? `Upper Breast: <b>${m.upperBreast}"</b> | ` : ''}
+                          ${m.lowerBreast ? `Lower Breast: <b>${m.lowerBreast}"</b> | ` : ''}
+                          ${m.armHole ? `Arm Hole: <b>${m.armHole}"</b> | ` : ''}
+                          ${m.sleeveLength ? `Sleeve Length: <b>${m.sleeveLength}"</b> | ` : ''}
+                          ${m.sleeveFitting ? `Sleeve Fitting: <b>${m.sleeveFitting}"</b> | ` : ''}
+                          ${m.suitLength ? `Suit Length: <b>${m.suitLength}"</b>` : ''}
+                        </p>
+                      </div>
+                    ` : ''}
+
+                    ${(m.waist || m.salwarLength || m.mohri) ? `
+                      <div class="bg-indigo-50/50 p-1.5 rounded border border-indigo-200 mt-1">
+                        <p class="text-[10px] font-bold text-indigo-700">👖 Plazo / Paint / Salwar Naap:</p>
+                        <p class="text-[11px] text-slate-700">
+                          ${m.waist ? `Waist: <b>${m.waist}"</b> | ` : ''}
+                          ${m.hip ? `Hip: <b>${m.hip}"</b> | ` : ''}
+                          ${m.salwarLength ? `Salwar Length: <b>${m.salwarLength}"</b> | ` : ''}
+                          ${m.mohri ? `Mohri: <b>${m.mohri}"</b> | ` : ''}
+                          ${m.aasan ? `Aasan: <b>${m.aasan}"</b> | ` : ''}
+                          ${m.belt ? `Belt: <b>${m.belt}"</b> | ` : ''}
+                          ${m.thighFitting ? `Thigh Fitting: <b>${m.thighFitting}"</b>` : ''}
+                        </p>
+                      </div>
+                    ` : ''}
+
+                    <button onclick='saveClientMeasurementForFuture("${ord.customerPhone}", ${JSON.stringify(m)})' class="bg-indigo-50 border border-indigo-300 text-indigo-700 font-bold px-2 py-1 rounded text-[10px] hover:bg-indigo-100 transition mt-1">
+                      💾 Is Client Ka Naap Future Ke Liye Save Karein
+                    </button>
+                  </div>
+                ` : ''}
+              </div>
+
+              ${isPending ? `
+                <div class="flex space-x-2 pt-1">
+                  <button onclick="updateOrderStatus('${ord.orderId}', 'Kapda Mila')" class="flex-1 bg-teal-700 text-white text-xs font-bold py-2 rounded-lg">Accept Order</button>
+                  <button onclick="updateOrderStatus('${ord.orderId}', 'REJECTED')" class="flex-1 border border-red-500 text-red-600 text-xs font-bold py-2 rounded-lg">Reject</button>
+                </div>
+              ` : `
+                <div class="flex items-center justify-between pt-1 border-t">
+                  <span class="text-xs font-bold">Status Badlein:</span>
+                  <select onchange="updateOrderStatus('${ord.orderId}', this.value)" class="text-xs border rounded p-1 bg-slate-50 font-semibold">
+                    ${['Kapda Mila', 'Silai Chalu', 'Ready', 'Delivered'].map(st => `<option value="${st}" ${ord.status === st ? 'selected' : ''}>${st}</option>`).join('')}
+                  </select>
+                </div>
+              `}
+            </div>
+          `;
+        });
+      }
+      showScreen('screen-tailor-dashboard');
+    }
+
+    function saveClientMeasurementForFuture(clientPhone, measurementObj) {
+      const client = usersDB[clientPhone];
+      if (client) {
+        client.savedMeasurements = measurementObj;
+        saveLocalStorage();
+        alert(`✅ Client (+91 ${clientPhone}) ka poora naap future ke liye permanently save ho gaya hai!`);
+      } else {
+        alert('Client profile nahi mili.');
+      }
+    }
+
+    function updateOrderStatus(ordId, newStatus) {
+      const ord = ordersDB.find(o => o.orderId === ordId);
+      if (ord) {
+        ord.status = newStatus;
+        if (newStatus === 'Delivered') {
+          const t = tailorsDB.find(tl => tl.id === ord.tailorId);
+          if (t) t.completedOrders++;
+        }
+        saveLocalStorage();
+        const currentTailor = tailorsDB.find(tl => tl.id === ord.tailorId);
+        renderTailorDashboard(currentTailor);
+      }
+    }
+
+    // --- CUSTOMER SECTION ---
+    function renderCustomerDashboard(user) {
+      document.getElementById('cust-welcome-name').innerText = `Namaste, ${user.name} (+91 ${user.phone})`;
+
+      const savedCard = document.getElementById('customer-saved-measurements-card');
+      const savedText = document.getElementById('customer-saved-measurements-text');
+      const sm = user.savedMeasurements;
+
+      if (sm && Object.keys(sm).length > 0) {
+        savedCard.classList.remove('hidden');
+        savedText.innerHTML = `
+          <div class="text-[11px] leading-relaxed">
+            ${sm.shoulder ? `<span>Shoulder: <b>${sm.shoulder}"</b>, </span>` : ''}
+            ${sm.frontNeck ? `<span>Front Neck: <b>${sm.frontNeck}"</b>, </span>` : ''}
+            ${sm.backNeck ? `<span>Back Neck: <b>${sm.backNeck}"</b>, </span>` : ''}
+            ${sm.upperBreast ? `<span>Upper Breast: <b>${sm.upperBreast}"</b>, </span>` : ''}
+            ${sm.lowerBreast ? `<span>Lower Breast: <b>${sm.lowerBreast}"</b>, </span>` : ''}
+            ${sm.armHole ? `<span>Arm Hole: <b>${sm.armHole}"</b>, </span>` : ''}
+            ${sm.sleeveLength ? `<span>Sleeve Length: <b>${sm.sleeveLength}"</b>, </span>` : ''}
+            ${sm.sleeveFitting ? `<span>Sleeve Fitting: <b>${sm.sleeveFitting}"</b>, </span>` : ''}
+            ${sm.suitLength ? `<span>Suit Length: <b>${sm.suitLength}"</b><br/></span>` : ''}
+            ${sm.waist ? `<span>Waist: <b>${sm.waist}"</b>, </span>` : ''}
+            ${sm.hip ? `<span>Hip: <b>${sm.hip}"</b>, </span>` : ''}
+            ${sm.salwarLength ? `<span>Salwar Length: <b>${sm.salwarLength}"</b>, </span>` : ''}
+            ${sm.mohri ? `<span>Mohri: <b>${sm.mohri}"</b>, </span>` : ''}
+            ${sm.aasan ? `<span>Aasan: <b>${sm.aasan}"</b>, </span>` : ''}
+            ${sm.belt ? `<span>Belt: <b>${sm.belt}"</b>, </span>` : ''}
+            ${sm.thighFitting ? `<span>Thigh: <b>${sm.thighFitting}"</b></span>` : ''}
+          </div>
+        `;
+      } else {
+        savedCard.classList.add('hidden');
+      }
+
+      // Active orders
+      const myOrders = ordersDB.filter(o => o.customerPhone === user.phone);
+      const activeContainer = document.getElementById('customer-active-orders');
+      if (myOrders.length === 0) {
+        activeContainer.innerHTML = `<div class="p-3 text-center text-xs text-slate-400 bg-slate-50 rounded-xl">Filhal koi active order nahi chal raha hai.</div>`;
+      } else {
+        activeContainer.innerHTML = '';
+        myOrders.forEach(ord => {
+          const isDone = ord.status === 'Ready' || ord.status === 'Delivered';
+          activeContainer.innerHTML += `
+            <div class="border rounded-xl p-3 bg-white shadow-sm flex items-center justify-between">
+              <div>
+                <p class="font-bold text-xs text-slate-800">${ord.category} • ₹${ord.price}</p>
+                <p class="text-[11px] text-slate-500">Delivery: ${ord.deliveryDueDate}</p>
+                <p class="text-[11px] font-semibold ${isDone ? 'text-green-600' : 'text-pink-600'}">
+                  ${isDone ? '🎉 Ready / Delivered!' : '✂️ Status: ' + ord.status}
+                </p>
+              </div>
+              <span class="text-xs font-bold px-2 py-1 rounded ${getStatusClass(ord.status)}">${ord.status}</span>
+            </div>
+          `;
+        });
+      }
+
+      // Catalog
+      const catalogGrid = document.getElementById('customer-catalog-grid');
+      catalogGrid.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        catalogGrid.innerHTML += `
+          <div onclick="openTailorList('${cat}')" class="border border-pink-100 hover:border-pink-500 bg-pink-50/40 p-4 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition">
+            <i class="fa-solid fa-shirt text-pink-600 text-xl mb-1.5"></i>
+            <h4 class="font-bold text-xs text-slate-800">${cat}</h4>
+            <span class="text-[10px] text-slate-400 mt-0.5">Darzi Chunein &rarr;</span>
+          </div>
+        `;
+      });
+
+      showScreen('screen-customer-home');
+    }
+
+    let bookingCategory = '';
+    let selectedTailorObj = null;
+
+    function openTailorList(cat) {
+      bookingCategory = cat;
+      document.getElementById('select-category-title').innerText = `${cat}: Darzi Chunein`;
+
+      const list = document.getElementById('tailor-candidates-list');
+      list.innerHTML = '';
+
+      tailorsDB.forEach(t => {
+        const price = (t.rates && t.rates[cat]) ? t.rates[cat] : 350;
+        list.innerHTML += `
+          <div class="border rounded-xl p-3.5 bg-white shadow-sm space-y-2">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-sm text-slate-900">${t.shopName}</h4>
+                <p class="text-xs text-slate-500">📍 ${t.address}</p>
+              </div>
+              <span class="bg-green-700 text-white font-bold text-xs px-2 py-0.5 rounded">⭐ ${t.rating}</span>
+            </div>
+            <p class="text-xs text-teal-700 font-semibold">${t.completedOrders || 0}+ Orders Complete Kiye Hain</p>
+            <div class="flex justify-between items-center pt-2 border-t">
+              <span class="text-base font-extrabold text-pink-700">Silai: ₹${price}</span>
+              <button onclick="openCustomizeScreen('${t.id}', '${price}', '${t.shopName}')" class="bg-pink-700 hover:bg-pink-800 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition">
+                Design & Naap Chunein &rarr;
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      showScreen('screen-tailor-selection');
+    }
+
+    function openCustomizeScreen(tId, price, sName) {
+      selectedTailorObj = { id: tId, price: parseInt(price), shopName: sName };
+      document.getElementById('customize-header-title').innerText = `Design & Naap (${bookingCategory})`;
+      
+      const savedBox = document.getElementById('saved-naap-option-box');
+      const savedSummary = document.getElementById('saved-naap-summary-text');
+      const sm = currentSessionUser.savedMeasurements;
+
+      if (sm && Object.keys(sm).length > 0) {
+        savedBox.classList.remove('hidden');
+        savedSummary.innerText = `Shoulder:${sm.shoulder || '-"'}, Front/Back Neck:${sm.frontNeck || '-"'}/${sm.backNeck || '-"'}, Upper/Lower Breast:${sm.upperBreast || '-"'}/${sm.lowerBreast || '-"'}, Waist:${sm.waist || '-"'}, Hip:${sm.hip || '-"'}`;
+        document.querySelector('input[value="SAVED_PROFILE"]').checked = true;
+      } else {
+        savedBox.classList.add('hidden');
+        document.querySelector('input[value="STORE_VISIT"]').checked = true;
+      }
+      
+      uploadedPhotoDataURLs = [];
+      document.getElementById('photos-preview-container').innerHTML = '';
+      onNaapModeChange();
+      calculateTotal();
+      showScreen('screen-customer-customize');
+    }
+
+    function handleMultiplePhotos(event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      const previewBox = document.getElementById('photos-preview-container');
+      
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const dataUrl = e.target.result;
+          uploadedPhotoDataURLs.push(dataUrl);
+          
+          const thumb = document.createElement('div');
+          thumb.className = "relative inline-block";
+          thumb.innerHTML = `
+            <img src="${dataUrl}" class="w-14 h-14 rounded-lg object-cover border shadow-sm" />
+            <span class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] cursor-pointer" onclick="removePhoto('${dataUrl}', this)">×</span>
+          `;
+          previewBox.appendChild(thumb);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removePhoto(url, elem) {
+      uploadedPhotoDataURLs = uploadedPhotoDataURLs.filter(u => u !== url);
+      elem.parentElement.remove();
+    }
+
+    function openImageModal(url) {
+      document.getElementById('modal-img').src = url;
+      document.getElementById('image-modal').classList.remove('hidden');
+    }
+
+    function closeImageModal() {
+      document.getElementById('image-modal').classList.add('hidden');
+    }
+
+    function onNaapModeChange() {
+      const mode = document.querySelector('input[name="naap_mode"]:checked')?.value || 'STORE_VISIT';
+      const manualInputs = document.getElementById('manual-naap-inputs');
+      if (mode === 'MANUAL') {
+        manualInputs.classList.remove('hidden');
+      } else {
+        manualInputs.classList.add('hidden');
+      }
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      if (!selectedTailorObj) return;
+      const withAstar = document.getElementById('cust-astar').checked;
+      const naapMode = document.querySelector('input[name="naap_mode"]:checked')?.value || 'STORE_VISIT';
+
+      const total = selectedTailorObj.price + (withAstar ? 80 : 0) + (naapMode === 'HOME_VISIT' ? 50 : 0);
+      document.getElementById('btn-confirm-order').innerText = `CONFIRM ORDER (Total: ₹${total})`;
+    }
+
+    function confirmOrder() {
+      const frontNeck = document.getElementById('cust-front-neck').value;
+      const backNeck = document.getElementById('cust-back-neck').value;
+      const sleeves = document.getElementById('cust-sleeves').value;
+      const pocket = document.getElementById('cust-pocket').value;
+      const withAstar = document.getElementById('cust-astar').checked;
+      const naapMode = document.querySelector('input[name="naap_mode"]:checked').value;
+      const dueDate = document.getElementById('cust-delivery-date').value.trim();
+
+      let orderMeasurements = {};
+      let modeTitle = 'Sample Kapda Rider/Store Denge';
+
+      if (naapMode === 'SAVED_PROFILE') {
+        orderMeasurements = currentSessionUser.savedMeasurements;
+        modeTitle = 'Saved Digital Profile Se Naap';
+      } else if (naapMode === 'MANUAL') {
+        // Collect all new Upper and Bottom measurements
+        orderMeasurements = {
+          // Upper
+          shoulder: document.getElementById('naap-shoulder').value || '',
+          backNeck: document.getElementById('naap-back-neck').value || '',
+          frontNeck: document.getElementById('naap-front-neck').value || '',
+          upperBreast: document.getElementById('naap-upper-breast').value || '',
+          lowerBreast: document.getElementById('naap-lower-breast').value || '',
+          armHole: document.getElementById('naap-arm-hole').value || '',
+          sleeveLength: document.getElementById('naap-sleeve-length').value || '',
+          sleeveFitting: document.getElementById('naap-sleeve-fitting').value || '',
+          suitLength: document.getElementById('naap-suit-length').value || '',
+          // Bottom
+          waist: document.getElementById('naap-waist').value || '',
+          hip: document.getElementById('naap-hip').value || '',
+          salwarLength: document.getElementById('naap-salwar-length').value || '',
+          mohri: document.getElementById('naap-mohri').value || '',
+          aasan: document.getElementById('naap-aasan').value || '',
+          belt: document.getElementById('naap-belt').value || '',
+          thighFitting: document.getElementById('naap-thigh-fitting').value || ''
+        };
+        modeTitle = 'Manual Detailed Naap';
+
+        // Permanently save to client's profile for future reuse
+        currentSessionUser.savedMeasurements = orderMeasurements;
+        usersDB[currentSessionUser.phone].savedMeasurements = orderMeasurements;
+      } else if (naapMode === 'HOME_VISIT') {
+        modeTitle = 'Ghar Par Visit (+₹50)';
+      }
+
+      const total = selectedTailorObj.price + (withAstar ? 80 : 0) + (naapMode === 'HOME_VISIT' ? 50 : 0);
+
+      const newOrder = {
+        orderId: 'ORD-' + Math.floor(Math.random() * 9000 + 1000),
+        tailorId: selectedTailorObj.id,
+        customerPhone: currentSessionUser.phone,
+        category: bookingCategory,
+        price: total,
+        status: 'PENDING',
+        deliveryDueDate: dueDate || '3 Din me',
+        specs: {
+          frontNeck: frontNeck,
+          backNeck: backNeck,
+          sleeveLength: sleeves,
+          pocketStyle: pocket,
+          astar: withAstar ? 'With Astar (+₹80)' : 'Without Astar'
+        },
+        measurementMode: modeTitle,
+        measurements: orderMeasurements,
+        photos: [...uploadedPhotoDataURLs]
+      };
+
+      ordersDB.push(newOrder);
+      saveLocalStorage();
+
+      alert(`🎉 Order Book Ho Gaya!\n\n${selectedTailorObj.shopName} ko aapka order bhej diya gaya hai. Aapka naap profile me future ke liye surakshit hai.`);
+      renderCustomerDashboard(currentSessionUser);
+    }
+
+    function getStatusClass(st) {
+      if (st === 'Ready' || st === 'Delivered') return 'bg-green-100 text-green-800';
+      if (st === 'Silai Chalu') return 'bg-purple-100 text-purple-800';
+      if (st === 'Kapda Mila') return 'bg-blue-100 text-blue-800';
+      if (st === 'REJECTED') return 'bg-red-100 text-red-800';
+      return 'bg-amber-100 text-amber-800';
+    }
+    // ============================================================
+    // 👉 APNI FIREBASE CONFIG (AGAR PASTE KARNA CHAHEIN):
+    // ============================================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyAIkY0ffLgzJzJ3dBDGFWeFW-z-ye-YY-g",
+  authDomain: "silai-hub-59f7d.firebaseapp.com",
+  projectId: "silai-hub-59f7d",
+  storageBucket: "silai-hub-59f7d.firebasestorage.app",
+  messagingSenderId: "282492281059",
+  appId: "1:282492281059:web:abf1bf02ee6e7b8d2ce5d6"
+};
+
+    let auth = null;
+    let db = null;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+    } catch(e) {
+      console.log("Firebase direct init fallback mode active");
+    }
+  </script>
+</body>
+</html>
